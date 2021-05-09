@@ -39,6 +39,7 @@ namespace Trotec.Recruitment.CidMapper
                 if(cid == 0)
                     continue;
                 
+                // TODO: There is no support yet for the rare case where a given CID corresponds to two values in a given character set.
                 var code = _records.FirstOrDefault(r => r.Id == cid)?.Code;
                 
                 if (code == null)
@@ -62,6 +63,7 @@ namespace Trotec.Recruitment.CidMapper
             
             foreach (var utf8Code in utf8Encoded)
             {
+                // TODO: There is no support yet for the rare case where a given CID corresponds to two values in a given character set.
                 var cid = _records.FirstOrDefault(r => r.Code.Equals(utf8Code.ToString("X").ToLower()))?.Id;
                 if (cid == null)
                 {

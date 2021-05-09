@@ -24,6 +24,14 @@ namespace Trotec.Recruitment.CidMapper.Tests
         }
         
         [Fact]
+        public void CidMapper_ReturnsFalseWhenEncodingPolishSigns()
+        {
+            var encodedResult = _mapper.TryEncode("Śnieżka", out var encoded);
+
+            Assert.False(encodedResult);
+        }
+        
+        [Fact]
         public void CidMapper_EncodesSimpleTextReverse()
         {
             var encodedResult = _mapper.TryEncode("cetorT", out var encoded);
