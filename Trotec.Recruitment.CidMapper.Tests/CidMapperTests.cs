@@ -60,5 +60,13 @@ namespace Trotec.Recruitment.CidMapper.Tests
             Assert.True(decodedResult);
             Assert.Equal("cetorT", decoded);
         }
+        
+        [Fact]
+        public void CidMapper_DecodesCharactersWithCidFromRange256Onwards()
+        {
+            var success = _mapper.TryDecode(new byte[] { 0xaf, 0x00, 0x50, 0x01 }, out var decoded);
+            Assert.True(success);
+            Assert.Equal("Ìｪ", decoded); // byte representation of the text in UTF8 is { 195, 140, 239, 189, 170 }
+        }
     }
 }
