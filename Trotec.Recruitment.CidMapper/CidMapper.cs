@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;
 
@@ -17,50 +17,75 @@ namespace Trotec.Recruitment.CidMapper
         {
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
-                Delimiter = "\t",
+                Delimiter = "\t"
             };
-            
+
             using (var reader = new StreamReader(cmapFilePath))
             using (var csv = new CsvReader(reader, config))
             {
                 _records = csv.GetRecords<CidToUtf8Model>().ToList();
             }
 
-                
+
             return _records != null;
         }
 
         public bool TryDecode(byte[] cidEncoded, out string decoded)
         {
             var utf8Encoded = new List<byte>();
-            
-            foreach (var cid in cidEncoded)
+
+            for (var i = 0; i < cidEncoded.Length; i += 2)
             {
-                if(cid == 0)
-                    continue;
-                
-                // TODO: There is no support yet for the rare case where a given CID corresponds to two values in a given character set.
-                var code = _records.FirstOrDefault(r => r.Id == cid)?.Code;
-                
-                if (code == null)
+                var cidNumber = GetCidNumberFromTwoBytes(cidEncoded[i], cidEncoded[i + 1]);
+                var utf8Code = GetUtf8CodeForCidNumber(cidNumber);
+
+                if (utf8Code == null)
                 {
                     decoded = null;
                     return false;
                 }
-                
-                utf8Encoded.Add(byte.Parse(code, System.Globalization.NumberStyles.HexNumber));
+
+                if (utf8Code.Contains(','))
+                    // TODO: Can I just choose one of two values, no matter which?
+                    utf8Code = GetFirstUtf8ValueForCidNumber(utf8Code);
+
+                for (var j = 0; j < utf8Code.Length; j += 2)
+                    utf8Encoded.Add(byte.Parse(utf8Code.Substring(j, 2), NumberStyles.HexNumber));
             }
 
-            decoded = System.Text.Encoding.UTF8.GetString(utf8Encoded.ToArray());
-            
+            try
+            {
+                decoded = Encoding.UTF8.GetString(utf8Encoded.ToArray());
+            }
+            catch (Exception)
+            {
+                decoded = null;
+                return false;
+            }
+
             return true;
+        }
+
+        private static short GetCidNumberFromTwoBytes(byte firstByte, byte lastByte)
+        {
+            return (short) ((lastByte << 8) | firstByte);
+        }
+
+        private string GetUtf8CodeForCidNumber(short cidNumber)
+        {
+            return _records.FirstOrDefault(r => r.Id == cidNumber)?.Code;
+        }
+
+        private string GetFirstUtf8ValueForCidNumber(string utf8Code)
+        {
+            return utf8Code.Substring(0, utf8Code.IndexOf(','));
         }
 
         public bool TryEncode(string input, out byte[] encoded)
         {
-            var utf8Encoded = System.Text.Encoding.UTF8.GetBytes(input);
-            var cidEncoded = new List<Byte>();
-            
+            var utf8Encoded = Encoding.UTF8.GetBytes(input);
+            var cidEncoded = new List<byte>();
+
             foreach (var utf8Code in utf8Encoded)
             {
                 // TODO: There is no support yet for the rare case where a given CID corresponds to two values in a given character set.
@@ -70,10 +95,11 @@ namespace Trotec.Recruitment.CidMapper
                     encoded = null;
                     return false;
                 }
+
                 cidEncoded.Add((byte) cid);
                 cidEncoded.Add(0);
             }
-            
+
             encoded = cidEncoded.ToArray();
             return true;
         }
