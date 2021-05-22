@@ -16,6 +16,7 @@ namespace Trotec.Recruitment.CidMapper.Tests
         [Fact]
         public void CidMapper_ReturnsFalseWhenEncodingPolishSigns()
         {
+            // TODO: This test has wrong assumption. The Polish diacritics are contained in the cid map and should be correctly encoded.
             var encodedResult = Mapper.TryEncode("Śnieżka", out var encoded);
 
             Assert.False(encodedResult);
