@@ -17,12 +17,3 @@ Sebastian Bobrowski
 sebastian.bobrowski@outlook.com, s.bobrowski@aol.com
 ## Instructions for use
 It is enough to run the project with tests.
-## Development enviroment
-### Operating system
-macOS Big Sur
-### IDE
-JetBrains Rider
-### .NET SDK
-3.1.408
-
-
